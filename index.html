@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firefighting Robot Control Center</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Welcome Banner -->
+        <div class="banner">
+            <h1>Welcome to Firefighting Robot Control Center</h1>
+            <p>Choose your mode and monitor live Vision AI feed</p>
+        </div>
+
+        <!-- Mode Selection -->
+        <div id="modeSelection" class="mode-selection">
+            <button class="mode-btn manual-btn" onclick="selectMode('manual')">Manual Mode</button>
+            <button class="mode-btn autonomous-btn" onclick="selectMode('autonomous')">Autonomous Mode</button>
+        </div>
+
+        <!-- Manual Mode Section -->
+        <div id="manualMode" class="mode-panel hidden">
+            <div class="panel-header">
+                <button class="change-mode-btn" onclick="changeMode()">Change Mode</button>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Manual Mode</h2>
+                    <p class="card-description">Manual control of robot with live camera stream and voice commands</p>
+                </div>
+                <div class="card-content">
+                    <!-- Camera Stream -->
+                    <div class="camera-container">
+                        <img id="manualCameraStream" src="" alt="ESP32-CAM Live Stream" onerror="handleCameraError(this)">
+                    </div>
+
+                    <!-- Movement Controls -->
+                    <div class="controls-section">
+                        <label class="section-label">Movement Controls</label>
+                        <div class="movement-grid">
+                            <button class="control-btn" style="grid-column: 2;" onclick="sendCommand('forward')">
+                                <span class="arrow">↑</span>
+                            </button>
+                            <button class="control-btn" style="grid-column: 1; grid-row: 2;"
+                                onclick="sendCommand('left')">
+                                <span class="arrow">←</span>
+                            </button>
+                            <button class="control-btn" style="grid-column: 2; grid-row: 2;"
+                                onclick="sendCommand('backward')">
+                                <span class="arrow">↓</span>
+                            </button>
+                            <button class="control-btn" style="grid-column: 3; grid-row: 2;"
+                                onclick="sendCommand('right')">
+                                <span class="arrow">→</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Pump Control -->
+                    <div class="pump-section">
+                        <button id="pumpBtn" class="pump-btn" onclick="togglePump()">
+                            <span>💧</span> Pump OFF
+                        </button>
+                    </div>
+
+                    <!-- Voice Command -->
+                    <div class="voice-section">
+                        <label class="section-label">Voice Command Control</label>
+                        <div class="voice-input-group">
+                            <input type="text" id="voiceInput" placeholder="e.g., move forward, turn left, pump on"
+                                onkeypress="handleVoiceEnter(event)">
+                            <button class="voice-btn" onclick="sendVoiceCommand()">🎤</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Autonomous Mode Section -->
+        <div id="autonomousMode" class="mode-panel hidden">
+            <div class="panel-header">
+                <button class="change-mode-btn" onclick="changeMode()">Change Mode</button>
+            </div>
+
+            <!-- Camera Stream -->
+            <div class="card">
+                <div class="card-header">
+                    <h2>Autonomous Mode</h2>
+                    <p class="card-description">Autonomous navigation with Vision AI and sensor fusion</p>
+                </div>
+                <div class="card-content">
+                    <div class="camera-container">
+                        <img id="autonomousCameraStream" src=""
+                            alt="ESP32-CAM Live Stream" onerror="handleCameraError(this)">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Two Column Layout -->
+            <div class="two-column">
+                <!-- Left Column: Sensors -->
+                <div class="column">
+                    <!-- Sensor Status -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Sensor Status</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="sensor-item">
+                                <div class="sensor-info">
+                                    <span class="sensor-icon">🔥</span>
+                                    <div>
+                                        <p class="sensor-label">Flame Sensor</p>
+                                        <p class="sensor-value" id="flameValue">250</p>
+                                    </div>
+                                </div>
+                                <span class="badge badge-safe" id="flameBadge">SAFE</span>
+                            </div>
+                            <div class="sensor-item">
+                                <div class="sensor-info">
+                                    <span class="sensor-icon">💨</span>
+                                    <div>
+                                        <p class="sensor-label">Smoke Sensor</p>
+                                        <p class="sensor-value" id="smokeValue">180</p>
+                                    </div>
+                                </div>
+                                <span class="badge badge-safe" id="smokeBadge">SAFE</span>
+                            </div>
+                            <div class="sensor-item">
+                                <div class="sensor-info">
+                                    <span class="sensor-icon">📡</span>
+                                    <div>
+                                        <p class="sensor-label">PIR Motion</p>
+                                        <p class="sensor-value" id="pirValue">CLEAR</p>
+                                    </div>
+                                </div>
+                                <span class="badge badge-outline" id="pirBadge">INACTIVE</span>
+                            </div>
+                            <div class="sensor-item">
+                                <div class="sensor-info">
+                                    <span class="sensor-icon">📏</span>
+                                    <div>
+                                        <p class="sensor-label">Ultrasonic Distance</p>
+                                        <p class="sensor-value" id="ultrasonicValue">45 cm</p>
+                                    </div>
+                                </div>
+                                <span class="badge badge-outline" id="ultrasonicBadge">CLEAR</span>
+                            </div>
+                            <div class="sensor-item">
+                                <div class="sensor-info">
+                                    <span class="sensor-icon">🌡️</span>
+                                    <div>
+                                        <p class="sensor-label">IR Temperature</p>
+                                        <p class="sensor-value" id="tempValue">28°C</p>
+                                    </div>
+                                </div>
+                                <span class="badge badge-safe" id="tempBadge">SAFE</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Sensor Trends</h3>
+                        </div>
+                        <div class="card-content">
+                            <p class="chart-title">Flame & Smoke Levels</p>
+                            <canvas id="flameChart" height="200"></canvas>
+                            <p class="chart-title">Distance & Temperature</p>
+                            <canvas id="distanceChart" height="200"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Controls & Alerts -->
+                <div class="column">
+                    <!-- Human Following -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Controls</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="switch-container">
+                                <div>
+                                    <label class="switch-label">Human Following</label>
+                                    <p class="switch-description" id="followingStatus">Autonomous navigation</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="humanFollowingSwitch" onchange="toggleHumanFollowing()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Alerts -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>AI Detection Alerts</h3>
+                        </div>
+                        <div class="card-content">
+                            <div id="alertsContainer" class="alerts-container"></div>
+                        </div>
+                    </div>
+
+                    <!-- Data Logging -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Data Logging</h3>
+                        </div>
+                        <div class="card-content">
+                            <div class="switch-container">
+                                <div>
+                                    <label class="switch-label">Enable Logging</label>
+                                    <p class="switch-description">Record sensor data to file</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="loggingSwitch" onchange="toggleLogging()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="log-status">
+                                <div>
+                                    <p class="sensor-label">Log Status</p>
+                                    <span class="badge badge-outline" id="logBadge">LOGGING OFF</span>
+                                </div>
+                                <button class="download-btn" id="downloadBtn" onclick="downloadLog()" disabled>
+                                    ⬇️ Download
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Powered by ESP32 Modules + Vision AI</p>
+        </footer>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="toast hidden"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
